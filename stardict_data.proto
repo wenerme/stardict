@@ -1,0 +1,52 @@
+syntax = "proto3";
+package wener.stardict.v1;
+
+option go_package = "github.com/wenerme/stardict/genproto/v1/stardictdata;stardictdata";
+option java_multiple_files = true;
+option java_outer_classname = "StardictDataProto";
+option java_package = "com.github.wenerme.stardict.v1.stardictdata";
+option objc_class_prefix = "WAPI";
+
+import "google/protobuf/timestamp.proto";
+
+
+message StardictData {
+    Info info = 1;
+    repeated Entry entries = 2;
+}
+
+
+message Info {
+    string name = 1;
+    string version = 2;
+    string description = 3;
+
+    string author = 4;
+    string email = 5;
+    string website = 6;
+
+    google.protobuf.Timestamp date = 7;
+    string type = 8;
+}
+
+message Entry {
+    string word = 1;
+    repeated string synonyms = 2;
+    repeated Content contents = 3;
+}
+
+message Content {
+    ContentType type = 1;
+    string text = 2;
+}
+
+enum ContentType {
+    TEXT = 0;
+    YIBIAO = 1;
+    PHONETI = 2; // English phonetic
+    PANGO = 3;
+    HTML = 4;
+    RESOURCE = 5;
+    WAV = 6;
+    PICTURE = 7;
+}
