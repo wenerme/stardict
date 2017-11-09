@@ -1,11 +1,11 @@
-package codec
+package stardictfmt
 
 import (
 	"bytes"
 	"io"
 )
 
-type EntryContentReader func(dict *Dict, idx *DictEntry, typ ContentType, buf *bytes.Buffer) (*EntryContent, error)
+type EntryContentReader func(dict *Reader, idx *DictEntry, typ ContentType, buf *bytes.Buffer) (*EntryContent, error)
 
 var EntryContentReaders = make(map[ContentType]EntryContentReader)
 
@@ -14,7 +14,7 @@ type EntryContent struct {
 	Text string
 }
 
-func readTextEntry(dict *Dict, idx *DictEntry, typ ContentType, buf *bytes.Buffer) (*EntryContent, error) {
+func readTextEntry(dict *Reader, idx *DictEntry, typ ContentType, buf *bytes.Buffer) (*EntryContent, error) {
 	entry := &EntryContent{}
 	entry.Type = typ
 	b, err := buf.ReadBytes(0)

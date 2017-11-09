@@ -1,4 +1,4 @@
-package codec
+package stardictfmt
 
 import (
 	"compress/gzip"
@@ -12,9 +12,9 @@ import (
 
 func LookupFile(dir string, fn string, exts ...string) (string, bool) {
 	/*
-	1) gStarDictDataDir + "/dic",
-	2) "/usr/share/stardict/dic",
-	3) g_get_home_dir() + "/.stardict/dic".
+		1) gStarDictDataDir + "/dic",
+		2) "/usr/share/stardict/dic",
+		3) g_get_home_dir() + "/.stardict/dic".
 	*/
 	return "", false
 }

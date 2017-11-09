@@ -1,13 +1,14 @@
 package stardictutil
 
 import (
+	"encoding/json"
 	"github.com/Sirupsen/logrus"
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/wenerme/letsgo/compress"
-	"github.com/wenerme/stardict/codec"
 	"github.com/wenerme/stardict/db"
+	"github.com/wenerme/stardict/fmt"
 	"github.com/wenerme/stardict/genproto/v1/stardictdata"
 	"io/ioutil"
 	"os"
@@ -16,30 +17,44 @@ import (
 )
 
 // Open and convert to data
-func Open(file string) (data *stardictdata.StardictData, err error) {
-	switch filepath.Ext(wcompress.FinalName(file)) {
-	case ".pb":
-		f, err := os.Open(file)
-		if err != nil {
-			return nil, err
+func Read(file string) (data *stardictdata.StardictData, err error) {
+	return ReadWithFormat(file, "")
+}
+func ReadWithFormat(file string, format string) (data *stardictdata.StardictData, err error) {
+	if format == "" {
+		switch filepath.Ext(wcompress.FinalName(file)) {
+		case ".json":
+			format = "json"
+		case ".pb":
+			format = "pb"
+		case ".ifo", ".idx", ".dict", ".syn", ".tar":
+			format = "raw"
+		default:
+			err = errors.New("can not detect format from filename")
+			return
 		}
-		_, r, err := wcompress.Decompress(f, file)
-		if err != nil {
-			return nil, err
-		}
-		b, err := ioutil.ReadAll(r)
-		if err != nil {
-			return nil, err
-		}
-		data = &stardictdata.StardictData{}
-		err = proto.Unmarshal(b, data)
-	case ".ifo", ".idx", ".dict", ".syn", ".tar":
-		var dict *codec.Dict
-		dict, err = codec.Open(file)
+	}
+	switch format {
+
+	case "raw":
+		var dict *stardictfmt.Reader
+		dict, err = stardictfmt.Read(file)
 		if err != nil {
 			return
 		}
 		data, err = ConvertRawToData(dict)
+	case "json", "pb":
+		var b []byte
+		if _, b, err = wcompress.DecompressAll(file); err != nil {
+			return
+		}
+		data = &stardictdata.StardictData{}
+		switch format {
+		case "pb":
+			err = proto.Unmarshal(b, data)
+		case "json":
+			err = json.Unmarshal(b, data)
+		}
 	default:
 		err = errors.New("invalid file format")
 	}
@@ -47,13 +62,62 @@ func Open(file string) (data *stardictdata.StardictData, err error) {
 }
 
 // Write date to
-func Write(data *stardictdata.StardictData, path string, format string) (err error) {
+func Write(data *stardictdata.StardictData, path string) (err error) {
+	return WriteWithFormat(data, path, "")
+}
+func WriteWithFormat(data *stardictdata.StardictData, file string, format string) (err error) {
+	if format == "" {
+		switch filepath.Ext(file) {
+		case ".pb":
+			format = "protobuf"
+		case ".db":
+			format = "sqlite"
+		case ".csv":
+			format = "csv"
+		case ".json":
+			format = "json"
+		default:
+			err = errors.New("can not detect format from filename")
+			return
+		}
+	}
+	var b []byte
+	switch format {
+	case "csv":
+	case "sqlite":
+		return writeDb(data, file, "sqlite3")
+	case "json":
+		b, err = json.Marshal(data)
+		if err != nil {
+			return
+		}
+		err = ioutil.WriteFile(file, b, os.ModePerm)
+	case "pb":
+		fallthrough
+	case "protobuf":
+		b, err = proto.Marshal(data)
+		if err != nil {
+			return
+		}
+		err = ioutil.WriteFile(file, b, os.ModePerm)
+	default:
+		err = errors.New("invalid format")
+	}
+	return
+}
+func writeDb(data *stardictdata.StardictData, dialect string, arg string) (err error) {
 	var db *gorm.DB
-	if db, err = gorm.Open("sqlite3", path); err != nil {
+	if db, err = gorm.Open(dialect, arg); err != nil {
 		return
 	}
 	defer db.Close()
-	db.AutoMigrate(stardictdb.Dictionary{}, stardictdb.Word{}, stardictdb.Synonym{}, stardictdb.Content{})
+	if err = db.AutoMigrate(
+		stardictdb.Dictionary{},
+		stardictdb.Word{},
+		stardictdb.Synonym{},
+		stardictdb.Content{}).Error; err != nil {
+		return
+	}
 
 	{
 		db := db.Begin()
@@ -124,6 +188,5 @@ func Write(data *stardictdata.StardictData, path string, format string) (err err
 			}
 		}
 	}
-
 	return
 }

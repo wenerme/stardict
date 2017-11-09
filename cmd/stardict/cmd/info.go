@@ -30,24 +30,21 @@ var infoCmd = &cobra.Command{
 	Short:   "Show info about dict",
 	Long:    `Stardict info`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fn := args[0]
-		data, err := stardictutil.Open(fn)
-		if err != nil {
-			logrus.WithError(err).Fatal("failed to load dict")
-		}
 
-		fmt.Printf(`file: %v
+		for _, fn := range args {
+			data, err := stardictutil.Read(fn)
+			if err != nil {
+				logrus.WithError(err).Fatal("failed to load dict")
+			}
+
+			fmt.Printf(`file: %v
 name: %v
 ver.: %v
 `,
-			fn,
-			data.Info.Name,
-			data.Info.Version,
-		)
-
-		err = stardictutil.Write(data, "test.db", "")
-		if err != nil {
-			logrus.WithError(err).Fatal("failed to write")
+				fn,
+				data.Info.Name,
+				data.Info.Version,
+			)
 		}
 	},
 }

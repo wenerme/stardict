@@ -1,12 +1,15 @@
-package codec
+package stardictfmt
 
-import "time"
+import (
+	"time"
+)
 
 const InfoMagic = "StarDict's dict ifo file"
 
-type Dict struct {
+type Reader struct {
 	Info    *DictInfo
 	Entries []*DictEntry
+	//Data *stardictdata.StardictData // todo directly read into data
 }
 
 type DictInfo struct {

@@ -3,11 +3,11 @@ package stardictutil
 import (
 	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
-	"github.com/wenerme/stardict/codec"
+	"github.com/wenerme/stardict/fmt"
 	"github.com/wenerme/stardict/genproto/v1/stardictdata"
 )
 
-func ConvertRawToData(dict *codec.Dict) (*stardictdata.StardictData, error) {
+func ConvertRawToData(dict *stardictfmt.Reader) (*stardictdata.StardictData, error) {
 	data := &stardictdata.StardictData{}
 	data.Info = convertInfo(dict.Info)
 
@@ -21,7 +21,7 @@ func ConvertRawToData(dict *codec.Dict) (*stardictdata.StardictData, error) {
 	return data, nil
 }
 
-func convertEntry(entry *codec.DictEntry) (*stardictdata.Entry, error) {
+func convertEntry(entry *stardictfmt.DictEntry) (*stardictdata.Entry, error) {
 	data := &stardictdata.Entry{}
 	data.Word = entry.Word
 	data.Synonyms = entry.Synonyms
@@ -36,27 +36,29 @@ func convertEntry(entry *codec.DictEntry) (*stardictdata.Entry, error) {
 	return data, nil
 }
 
-func convertContent(raw *codec.EntryContent) (data *stardictdata.Content, err error) {
+func convertContent(raw *stardictfmt.EntryContent) (data *stardictdata.Content, err error) {
 	data = &stardictdata.Content{}
 	data.Text = raw.Text
 	data.Type, err = convertTypeRawToData(raw.Type)
 	return
 }
-func convertTypeRawToData(raw codec.ContentType) (stardictdata.ContentType, error) {
+func convertTypeRawToData(raw stardictfmt.ContentType) (stardictdata.ContentType, error) {
 	switch raw {
-	case codec.NULL_TERMINAL_TEXT:
+	case stardictfmt.NULL_TERMINAL_TEXT:
 		return stardictdata.ContentType_TEXT, nil
-	case codec.HTML:
+	case stardictfmt.HTML:
 		return stardictdata.ContentType_HTML, nil
-	case codec.YINBIAO:
+	case stardictfmt.YINBIAO:
 		return stardictdata.ContentType_YIBIAO, nil
-	case codec.ENGLISH_PHONETIC:
+	case stardictfmt.ENGLISH_PHONETIC:
+		return stardictdata.ContentType_PHONETI, nil
+	case stardictfmt.XDXF_MARKUP:
 		return stardictdata.ContentType_PHONETI, nil
 	}
 	return 0, errors.New("unknown content type raw to data: " + string(raw))
 }
 
-func convertInfo(info *codec.DictInfo) *stardictdata.Info {
+func convertInfo(info *stardictfmt.DictInfo) *stardictdata.Info {
 	data := &stardictdata.Info{}
 	data.Name = info.BookName
 	data.Version = info.Version

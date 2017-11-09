@@ -1,4 +1,4 @@
-package codec
+package stardictfmt
 
 import (
 	"archive/tar"
@@ -95,14 +95,14 @@ func (self *LoadConf) Close() (err error) {
 	return
 }
 
-func Open(file string) (dict *Dict, err error) {
+func Read(file string) (dict *Reader, err error) {
 	var conf *LoadConf
 	conf, err = NewConf(file)
 	if err != nil {
 		return
 	}
 	defer conf.Close()
-	d := NewDict()
+	d := NewReader()
 	err = d.LoadWithConf(conf)
 	if err != nil {
 		return
@@ -199,11 +199,11 @@ func newArchiveConf(file string) (conf *LoadConf, err error) {
 	return
 }
 
-func NewDict() *Dict {
-	return &Dict{}
+func NewReader() *Reader {
+	return &Reader{}
 }
 
-func (self *Dict) LoadWithConf(conf *LoadConf) (err error) {
+func (self *Reader) LoadWithConf(conf *LoadConf) (err error) {
 	var r io.Reader
 	if r, err = conf.Info(); err != nil {
 		return
@@ -236,7 +236,7 @@ func (self *Dict) LoadWithConf(conf *LoadConf) (err error) {
 	return
 }
 
-func (self *Dict) LoadInfoFile(file string) (err error) {
+func (self *Reader) LoadInfoFile(file string) (err error) {
 	f, err := openFile(file)
 	if err != nil {
 		return err
@@ -244,7 +244,7 @@ func (self *Dict) LoadInfoFile(file string) (err error) {
 	defer f.Close()
 	return self.LoadInfo(f)
 }
-func (self *Dict) LoadIndexFile(file string) (err error) {
+func (self *Reader) LoadIndexFile(file string) (err error) {
 	f, err := openFile(file)
 	if err != nil {
 		return err
@@ -252,18 +252,18 @@ func (self *Dict) LoadIndexFile(file string) (err error) {
 	defer f.Close()
 	return self.LoadIndex(f)
 }
-func (self *Dict) LoadInfo(r io.Reader) (err error) {
+func (self *Reader) LoadInfo(r io.Reader) (err error) {
 	self.Info, err = readInfo(r)
 	return
 }
-func (self *Dict) LoadIndex(r io.Reader) (err error) {
+func (self *Reader) LoadIndex(r io.Reader) (err error) {
 	if self.Info == nil {
 		return errors.New("no info loaded yet")
 	}
 	self.Entries, err = readIndexEntries(self.Info.IndexOffsetBits, r)
 	return
 }
-func (self *Dict) LoadDictFile(file string) (err error) {
+func (self *Reader) LoadDictFile(file string) (err error) {
 	f, err := openFile(file)
 	if err != nil {
 		return err
@@ -271,7 +271,7 @@ func (self *Dict) LoadDictFile(file string) (err error) {
 	defer f.Close()
 	return self.LoadDict(f)
 }
-func (self *Dict) LoadDict(r io.Reader) (err error) {
+func (self *Reader) LoadDict(r io.Reader) (err error) {
 	for _, idx := range self.Entries {
 		err = readDictContent(self, idx, r)
 		if err != nil {
@@ -392,7 +392,7 @@ func readIndexEntries(bits int, reader io.Reader) (entries []*DictEntry, err err
 	return
 }
 
-func readDictContent(dict *Dict, idx *DictEntry, r io.Reader) error {
+func readDictContent(dict *Reader, idx *DictEntry, r io.Reader) error {
 	var contents []*EntryContent
 	b := make([]byte, idx.Size)
 	n, err := io.ReadFull(r, b)
@@ -420,7 +420,7 @@ func readDictContent(dict *Dict, idx *DictEntry, r io.Reader) error {
 	return nil
 }
 
-func (self *Dict) LoadSynonym(reader io.Reader) (err error) {
+func (self *Reader) LoadSynonym(reader io.Reader) (err error) {
 	r := bufio.NewReader(reader)
 	var b []byte
 	buf := make([]byte, 4)
@@ -432,7 +432,7 @@ func (self *Dict) LoadSynonym(reader io.Reader) (err error) {
 			}
 			return
 		}
-		if _, err = io.ReadFull(reader, buf); err != nil {
+		if _, err = io.ReadFull(r, buf); err != nil {
 			return
 		}
 
