@@ -44,6 +44,11 @@ ver.: %v
 			data.Info.Name,
 			data.Info.Version,
 		)
+
+		err = stardictutil.Write(data, "test.db", "")
+		if err != nil {
+			logrus.WithError(err).Fatal("failed to write")
+		}
 	},
 }
 

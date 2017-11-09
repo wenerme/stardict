@@ -26,6 +26,11 @@ import (
 
 var cfgFile string
 
+var rootConf = &_rootConf{}
+
+type _rootConf struct {
+}
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "stardict",

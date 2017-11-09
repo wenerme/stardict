@@ -18,6 +18,7 @@ message StardictData {
 
 message Info {
     string name = 1;
+    string code = 9; // code name for this dict
     string version = 2;
     string description = 3;
 
@@ -27,6 +28,9 @@ message Info {
 
     google.protobuf.Timestamp date = 7;
     string type = 8;
+
+    int32 word_count = 10;
+    int32 synonym_count = 11;
 }
 
 message Entry {

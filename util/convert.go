@@ -62,11 +62,15 @@ func convertInfo(info *codec.DictInfo) *stardictdata.Info {
 	data.Version = info.Version
 	data.Description = info.Description
 	data.Type = info.DictType
-	data.Date = new(google_protobuf.Timestamp)
-	data.Date.Seconds = int64(info.Date.Second())
-
+	if info.Date.Second() != 0 {
+		data.Date = new(google_protobuf.Timestamp)
+		data.Date.Seconds = int64(info.Date.Second())
+	}
 	data.Author = info.Author
 	data.Email = info.Email
 	data.Website = info.Website
+
+	data.WordCount = int32(info.WordCount)
+	data.SynonymCount = int32(info.SynWordCount)
 	return data
 }
