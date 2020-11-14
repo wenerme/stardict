@@ -1,3 +1,5 @@
+> Moved to https://github.com/wenerme/tools
+
 ## Stardict
 Library/Tools write in golang for Stardict
 
